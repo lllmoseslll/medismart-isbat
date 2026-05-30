@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  patient
+  doctor
+  admin
+}
+
+enum AppointmentStatus {
+  pending
+  confirmed
+  cancelled
+  completed
+}
+
+enum NotificationChannel {
+  email
+  sms
+  push
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role     @default(patient)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  patientProfile  PatientProfile?
+  doctorProfile   DoctorProfile?
+  notifications   Notification[]
+  symptomSessions SymptomSession[]
+  appointments    Appointment[]   @relation("PatientAppointments")
+
+  @@map("users")
+}
+
+model PatientProfile {
+  userId         String    @id @map("user_id")
+  name           String
+  dob            DateTime?
+  gender         String?
+  phone          String?
+  medicalHistory Json?     @map("medical_history")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("patient_profiles")
+}
+
+model DoctorProfile {
+  userId        String @id @map("user_id")
+  name          String
+  specialty     String
+  bio           String?
+  licenseNumber String @map("license_number")
+
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  availability Availability[]
+  appointments Appointment[]      @relation("DoctorAppointments")
+  notes        ConsultationNote[]
+
+  @@map("doctor_profiles")
+}
+
+model Availability {
+  id        String @id @default(uuid())
+  doctorId  String @map("doctor_id")
+  dayOfWeek Int    @map("day_of_week")
+  startTime String @map("start_time")
+  endTime   String @map("end_time")
+
+  doctor DoctorProfile @relation(fields: [doctorId], references: [userId], onDelete: Cascade)
+
+  @@map("availability")
+}
+
+model SymptomSession {
+  id        String   @id @default(uuid())
+  patientId String   @map("patient_id")
+  symptoms  Json
+  aiResult  Json?    @map("ai_result")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  patient      User          @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  @@map("symptom_sessions")
+}
+
+model Appointment {
+  id          String            @id @default(uuid())
+  patientId   String            @map("patient_id")
+  doctorId    String            @map("doctor_id")
+  sessionId   String?           @map("session_id")
+  scheduledAt DateTime          @map("scheduled_at")
+  status      AppointmentStatus @default(pending)
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  patient User            @relation("PatientAppointments", fields: [patientId], references: [id])
+  doctor  DoctorProfile   @relation("DoctorAppointments", fields: [doctorId], references: [userId])
+  session SymptomSession? @relation(fields: [sessionId], references: [id])
+  notes   ConsultationNote[]
+
+  @@map("appointments")
+}
+
+model ConsultationNote {
+  id            String   @id @default(uuid())
+  appointmentId String   @map("appointment_id")
+  doctorId      String   @map("doctor_id")
+  notes         String
+  diagnosis     String?
+  treatment     String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  appointment Appointment   @relation(fields: [appointmentId], references: [id])
+  doctor      DoctorProfile @relation(fields: [doctorId], references: [userId])
+
+  @@map("consultation_notes")
+}
+
+model Notification {
+  id      String              @id @default(uuid())
+  userId  String              @map("user_id")
+  type    String
+  message String
+  sentAt  DateTime            @default(now()) @map("sent_at")
+  channel NotificationChannel
+  read    Boolean             @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model AiKnowledgeBase {
+  id              String   @id @default(uuid())
+  conditionName   String   @map("condition_name")
+  symptomKeywords String[] @map("symptom_keywords")
+  specialty       String
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("ai_knowledge_base")
+}
