@@ -28,7 +28,7 @@ export default function AdminDashboard() {
   return (
     <div className="p-8 max-w-7xl mx-auto">
       {/* Guidance banner */}
-      <div className="flex items-start gap-3 rounded-2xl px-5 py-4 mb-7 text-white shadow-sm"
+      <div className="flex items-start gap-3 px-5 py-4 mb-7 text-white shadow-sm"
         style={{ background: 'linear-gradient(135deg,#0c4a6e,#0d9488)' }}>
         <span className="text-xl flex-shrink-0">🛡️</span>
         <div>
@@ -92,7 +92,7 @@ export default function AdminDashboard() {
               <XAxis dataKey="status" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip />
-              <Bar dataKey="count" radius={[6,6,0,0]}>
+              <Bar dataKey="count" radius={[0,0,0,0]}>
                 {barData.map(e => <Cell key={e.status} fill={STATUS_COLORS[e.status] || '#94a3b8'} />)}
               </Bar>
             </BarChart>
@@ -101,7 +101,7 @@ export default function AdminDashboard() {
             {barData.map(({ status, count }) => (
               <div key={status} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: STATUS_COLORS[status] || '#94a3b8' }} />
+                  <div className="h-2.5 w-2.5" style={{ backgroundColor: STATUS_COLORS[status] || '#94a3b8' }} />
                   <span className="text-slate-600 capitalize">{status}</span>
                 </div>
                 <span className="font-semibold text-slate-900">{count}</span>

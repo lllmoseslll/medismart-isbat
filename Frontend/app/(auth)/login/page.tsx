@@ -15,6 +15,7 @@ const DEMOS = [
     ring: 'ring-teal-400/60',
     bg: 'bg-teal-50 hover:bg-teal-100/70 border-teal-200',
     pill: 'bg-teal-100 text-teal-700',
+    user: { id: 'demo-patient-1', email: 'patient@medismart.com', role: 'patient', name: 'Alex Johnson' },
   },
   {
     role: 'Doctor',
@@ -25,6 +26,7 @@ const DEMOS = [
     ring: 'ring-sky-400/60',
     bg: 'bg-sky-50 hover:bg-sky-100/70 border-sky-200',
     pill: 'bg-sky-100 text-sky-700',
+    user: { id: 'demo-doctor-1', email: 'dr.chen@medismart.com', role: 'doctor', name: 'Dr. Sarah Chen' },
   },
   {
     role: 'Admin',
@@ -35,8 +37,11 @@ const DEMOS = [
     ring: 'ring-violet-400/60',
     bg: 'bg-violet-50 hover:bg-violet-100/70 border-violet-200',
     pill: 'bg-violet-100 text-violet-700',
+    user: { id: 'demo-admin-1', email: 'admin@medismart.com', role: 'admin', name: 'Admin User' },
   },
 ];
+
+const DEMO_MAP = Object.fromEntries(DEMOS.map(d => [d.email, d]));
 
 export default function LoginPage() {
   const router = useRouter();
@@ -57,7 +62,9 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
+
     try {
+      // Always try the real backend first — gets real data when backend is running
       const res = await api.auth.login({ email, password }) as {
         token: string; refreshToken: string;
         user: { id: string; email: string; role: string; name: string };
@@ -65,8 +72,17 @@ export default function LoginPage() {
       saveAuth(res.token, res.refreshToken, res.user as Parameters<typeof saveAuth>[2]);
       document.cookie = `ms_token=${res.token}; path=/`;
       router.push(params.get('next') || getDashboardPath(res.user.role));
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+    } catch {
+      // Backend unreachable — fall back to local demo mode for demo credentials only
+      const demo = DEMO_MAP[email];
+      if (demo && demo.password === password) {
+        const fakeToken = `demo-${demo.user.role}-${Date.now()}`;
+        saveAuth(fakeToken, fakeToken, demo.user as Parameters<typeof saveAuth>[2]);
+        document.cookie = `ms_token=${fakeToken}; path=/`;
+        router.push(params.get('next') || getDashboardPath(demo.user.role));
+      } else {
+        setError('Invalid credentials or server unavailable.');
+      }
     } finally {
       setLoading(false);
     }
@@ -80,7 +96,7 @@ export default function LoginPage() {
       <p className="text-slate-500 text-sm mb-8">Sign in to your MediSmart account to continue.</p>
 
       {error && (
-        <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 mb-5">
+        <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 mb-5">
           <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -108,41 +124,27 @@ export default function LoginPage() {
         </div>
         <button type="submit" className="btn-primary w-full py-3 text-[15px]" disabled={loading}>
           {loading
-            ? <span className="flex items-center gap-2"><span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Signing in…</span>
+            ? <span className="flex items-center gap-2"><span className="h-4 w-4 border-2 border-white/30 border-t-white animate-spin" />Signing in…</span>
             : 'Sign in →'}
         </button>
       </form>
 
       {/* Demo accounts */}
-      <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+      <div className="border border-slate-200 bg-slate-50/80 p-3">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Demo accounts</span>
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Demo accounts</span>
           <div className="flex-1 h-px bg-slate-200" />
-          <span className="text-xs text-slate-400">no sign-up needed</span>
+          <span className="text-[10px] text-slate-400">no sign-up needed</span>
         </div>
-        <p className="text-xs text-slate-500 mb-3 flex items-start gap-1.5">
-          <span>💡</span>
-          <span>Select an account below to explore the platform — it fills the form automatically.</span>
-        </p>
-        <div className="space-y-2">
+        <div className="flex gap-1.5">
           {DEMOS.map(d => {
             const active = email === d.email;
             return (
               <button key={d.role} onClick={() => fillDemo(d)}
-                className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all duration-150 text-left ${d.bg} ${active ? `ring-2 ${d.ring}` : ''}`}>
-                <span className="text-2xl flex-shrink-0">{d.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="font-semibold text-sm text-slate-800">{d.role}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${d.pill}`}>{d.role}</span>
-                  </div>
-                  <p className="text-xs text-slate-400 truncate">{d.email}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">{d.note}</p>
-                </div>
-                {active
-                  ? <span className="text-teal-600 text-xs font-bold flex-shrink-0">Selected ✓</span>
-                  : <span className="text-slate-300 text-xs flex-shrink-0">→ use</span>
-                }
+                className={`flex-1 flex flex-col items-center gap-1 py-2 px-1 border text-center transition-all duration-150 ${d.bg} ${active ? `ring-2 ${d.ring}` : ''}`}>
+                <span className="text-lg leading-none">{d.emoji}</span>
+                <span className="font-semibold text-xs text-slate-700">{d.role}</span>
+                {active && <span className="text-[10px] text-teal-600 font-bold leading-none">✓</span>}
               </button>
             );
           })}

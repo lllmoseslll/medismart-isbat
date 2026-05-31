@@ -18,8 +18,11 @@ async function req<T = unknown>(
   });
 
   if (res.status === 401) {
-    clearAuth();
-    window.location.href = '/login';
+    const tok = getToken();
+    if (!tok?.startsWith('demo-')) {
+      clearAuth();
+      window.location.href = '/login';
+    }
     throw new Error('Unauthorized');
   }
 
@@ -86,15 +89,24 @@ export const api = {
 
   admin: {
     listUsers: () => req('/admin/users'),
+    createUser: (data: unknown) => post('/admin/users', data),
+    updateUser: (id: string, data: unknown) => put(`/admin/users/${id}`, data),
+    resetPassword: (id: string, password: string) => put(`/admin/users/${id}/reset-password`, { password }),
+    deleteUser: (id: string) => del(`/admin/users/${id}`),
     createDoctor: (data: unknown) => post('/admin/doctors', data),
     getReports: () => req('/admin/reports'),
-    getKnowledgeBase: () => req('/admin/ai-knowledge-base'),
-    addKbEntry: (data: unknown) => post('/admin/ai-knowledge-base', data),
-    updateKbEntry: (id: string, data: unknown) => put(`/admin/ai-knowledge-base/${id}`, data),
-    deleteKbEntry: (id: string) => del(`/admin/ai-knowledge-base/${id}`),
+    getKnowledgeBase: () => req('/admin/knowledge-base'),
+    addKbEntry: (data: unknown) => post('/admin/knowledge-base', data),
+    updateKbEntry: (id: string, data: unknown) => put(`/admin/knowledge-base/${id}`, data),
+    deleteKbEntry: (id: string) => del(`/admin/knowledge-base/${id}`),
     updateDoctorAvailability: (id: string, availability: unknown[]) =>
       put(`/admin/doctors/${id}/availability`, { availability }),
     deactivateUser: (id: string) => put(`/admin/users/${id}/deactivate`, {}),
+  },
+
+  knowledgeBase: {
+    list: () => req('/doctors/knowledge-base'),
+    add: (data: unknown) => post('/doctors/knowledge-base', data),
   },
 
   notifications: {

@@ -44,7 +44,7 @@ export default function RegisterPage() {
       <p className="text-slate-500 text-sm mb-6">Join MediSmart — it's free and takes 30 seconds.</p>
 
       {/* Guidance note */}
-      <div className="flex items-start gap-2.5 bg-teal-50 border border-teal-200 rounded-xl px-4 py-3 mb-6 text-sm text-teal-800">
+      <div className="flex items-start gap-2.5 bg-teal-50 border border-teal-200 px-4 py-3 mb-6 text-sm text-teal-800">
         <span className="flex-shrink-0 mt-0.5">💡</span>
         <span>
           <strong>Create a patient or doctor account.</strong> Admin accounts are managed by the system.{' '}
@@ -54,7 +54,7 @@ export default function RegisterPage() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 mb-5">{error}</div>
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 mb-5">{error}</div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -93,7 +93,7 @@ export default function RegisterPage() {
 
         <button type="submit" className="btn-primary w-full py-3 text-[15px]" disabled={loading}>
           {loading
-            ? <span className="flex items-center gap-2"><span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Creating account…</span>
+            ? <span className="flex items-center gap-2"><span className="h-4 w-4 border-2 border-white/30 border-t-white animate-spin" />Creating account…</span>
             : 'Create account →'}
         </button>
       </form>

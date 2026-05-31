@@ -5,7 +5,6 @@ const prisma = require('../prisma');
 const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
-
 router.use(requireAuth(['admin']));
 
 // GET /api/admin/users
@@ -13,12 +12,9 @@ router.get('/users', async (req, res) => {
   try {
     const users = await prisma.user.findMany({
       select: {
-        id: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        patientProfile: { select: { name: true } },
-        doctorProfile: { select: { name: true, specialty: true } },
+        id: true, email: true, role: true, createdAt: true,
+        patientProfile: { select: { name: true, phone: true } },
+        doctorProfile: { select: { name: true, specialty: true, licenseNumber: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -29,22 +25,20 @@ router.get('/users', async (req, res) => {
   }
 });
 
-// POST /api/admin/doctors
+// POST /api/admin/users — create any user type
 router.post(
-  '/doctors',
+  '/users',
   [
     body('email').isEmail().normalizeEmail(),
     body('password').isLength({ min: 8 }),
     body('name').notEmpty(),
-    body('specialty').notEmpty(),
-    body('licenseNumber').notEmpty(),
-    body('bio').optional(),
+    body('role').isIn(['patient', 'doctor', 'admin']),
   ],
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
-    const { email, password, name, specialty, licenseNumber, bio, availability } = req.body;
+    const { email, password, name, role, specialty, licenseNumber, bio } = req.body;
 
     try {
       const existing = await prisma.user.findUnique({ where: { email } });
@@ -56,28 +50,140 @@ router.post(
         data: {
           email,
           passwordHash,
-          role: 'doctor',
-          doctorProfile: {
+          role,
+          patientProfile: role === 'patient' ? { create: { name } } : undefined,
+          doctorProfile: role === 'doctor' ? {
             create: {
               name,
-              specialty,
-              licenseNumber,
+              specialty: specialty || 'General Practice',
+              licenseNumber: licenseNumber || 'PENDING',
               bio,
+              availability: {
+                create: [1, 2, 3, 4, 5].map(day => ({
+                  dayOfWeek: day, startTime: '09:00', endTime: '17:00',
+                })),
+              },
+            },
+          } : undefined,
+        },
+        include: { patientProfile: true, doctorProfile: true },
+      });
+
+      res.status(201).json(user);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Failed to create user' });
+    }
+  }
+);
+
+// PUT /api/admin/users/:id — edit user details
+router.put(
+  '/users/:id',
+  [body('email').optional().isEmail().normalizeEmail()],
+  async (req, res) => {
+    const { name, email, role } = req.body;
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: req.params.id },
+        include: { patientProfile: true, doctorProfile: true },
+      });
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      const updated = await prisma.user.update({
+        where: { id: req.params.id },
+        data: {
+          ...(email && { email }),
+          ...(role && { role }),
+        },
+      });
+
+      if (name && user.patientProfile) {
+        await prisma.patientProfile.update({ where: { userId: req.params.id }, data: { name } });
+      }
+      if (name && user.doctorProfile) {
+        await prisma.doctorProfile.update({ where: { userId: req.params.id }, data: { name } });
+      }
+
+      res.json(updated);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Failed to update user' });
+    }
+  }
+);
+
+// PUT /api/admin/users/:id/reset-password
+router.put(
+  '/users/:id/reset-password',
+  [body('password').isLength({ min: 8 })],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+    try {
+      const passwordHash = await bcrypt.hash(req.body.password, 12);
+      await prisma.user.update({ where: { id: req.params.id }, data: { passwordHash } });
+      res.json({ message: 'Password reset successfully' });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Failed to reset password' });
+    }
+  }
+);
+
+// DELETE /api/admin/users/:id
+router.delete('/users/:id', async (req, res) => {
+  if (req.params.id === req.user.userId) {
+    return res.status(403).json({ error: 'You cannot delete your own admin account' });
+  }
+  try {
+    await prisma.user.delete({ where: { id: req.params.id } });
+    res.json({ message: 'User deleted' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
+// PUT /api/admin/users/:id/deactivate (legacy — kept for compatibility)
+router.put('/users/:id/deactivate', async (req, res) => {
+  try {
+    await prisma.user.update({ where: { id: req.params.id }, data: { role: 'patient' } });
+    res.json({ message: 'User deactivated' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to deactivate user' });
+  }
+});
+
+// POST /api/admin/doctors (legacy — kept for compatibility)
+router.post(
+  '/doctors',
+  [body('email').isEmail().normalizeEmail(), body('password').isLength({ min: 8 }), body('name').notEmpty(), body('specialty').notEmpty(), body('licenseNumber').notEmpty()],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+    const { email, password, name, specialty, licenseNumber, bio, availability } = req.body;
+    try {
+      const existing = await prisma.user.findUnique({ where: { email } });
+      if (existing) return res.status(409).json({ error: 'Email already registered' });
+
+      const passwordHash = await bcrypt.hash(password, 12);
+      const user = await prisma.user.create({
+        data: {
+          email, passwordHash, role: 'doctor',
+          doctorProfile: {
+            create: {
+              name, specialty, licenseNumber, bio,
               availability: availability
                 ? { create: availability }
-                : {
-                    create: [1, 2, 3, 4, 5].map(day => ({
-                      dayOfWeek: day,
-                      startTime: '09:00',
-                      endTime: '17:00',
-                    })),
-                  },
+                : { create: [1, 2, 3, 4, 5].map(d => ({ dayOfWeek: d, startTime: '09:00', endTime: '17:00' })) },
             },
           },
         },
         include: { doctorProfile: true },
       });
-
       res.status(201).json(user);
     } catch (err) {
       console.error(err);
@@ -85,20 +191,6 @@ router.post(
     }
   }
 );
-
-// PUT /api/admin/users/:id/deactivate
-router.put('/users/:id/deactivate', async (req, res) => {
-  try {
-    const user = await prisma.user.update({
-      where: { id: req.params.id },
-      data: { role: 'patient' },
-    });
-    res.json(user);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to deactivate user' });
-  }
-});
 
 // GET /api/admin/reports
 router.get('/reports', async (req, res) => {
@@ -120,16 +212,9 @@ router.get('/reports', async (req, res) => {
         }),
       ]);
 
-    const appointmentsByStatus = Object.fromEntries(
-      statusCounts.map(s => [s.status, s._count])
-    );
-
     res.json({
-      totalUsers,
-      totalDoctors,
-      totalPatients,
-      totalAppointments,
-      appointmentsByStatus,
+      totalUsers, totalDoctors, totalPatients, totalAppointments,
+      appointmentsByStatus: Object.fromEntries(statusCounts.map(s => [s.status, s._count])),
       recentAppointments,
     });
   } catch (err) {
@@ -138,87 +223,90 @@ router.get('/reports', async (req, res) => {
   }
 });
 
-// GET /api/admin/ai-knowledge-base
+// GET /api/admin/knowledge-base (also kept at legacy path)
 router.get('/ai-knowledge-base', async (req, res) => {
   try {
-    const entries = await prisma.aiKnowledgeBase.findMany({
-      orderBy: { conditionName: 'asc' },
-    });
+    const entries = await prisma.aiKnowledgeBase.findMany({ orderBy: { conditionName: 'asc' } });
     res.json(entries);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: 'Failed to fetch knowledge base' });
   }
 });
 
-// PUT /api/admin/ai-model
-router.put('/ai-model', async (req, res) => {
-  const { entries } = req.body;
-  if (!Array.isArray(entries)) return res.status(400).json({ error: 'entries must be an array' });
-
+router.get('/knowledge-base', async (req, res) => {
   try {
-    await prisma.aiKnowledgeBase.deleteMany();
-    await prisma.aiKnowledgeBase.createMany({ data: entries });
-    res.json({ message: 'Knowledge base updated', count: entries.length });
+    const entries = await prisma.aiKnowledgeBase.findMany({ orderBy: { conditionName: 'asc' } });
+    res.json(entries);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to update AI model' });
+    res.status(500).json({ error: 'Failed to fetch knowledge base' });
   }
 });
 
-// PUT /api/admin/ai-knowledge-base/:id
-router.put('/ai-knowledge-base/:id', async (req, res) => {
+router.post('/knowledge-base', async (req, res) => {
   const { conditionName, symptomKeywords, specialty } = req.body;
   try {
-    const entry = await prisma.aiKnowledgeBase.update({
-      where: { id: req.params.id },
-      data: { conditionName, symptomKeywords, specialty },
-    });
+    const entry = await prisma.aiKnowledgeBase.create({ data: { conditionName, symptomKeywords, specialty } });
+    res.status(201).json(entry);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create entry' });
+  }
+});
+
+router.put('/knowledge-base/:id', async (req, res) => {
+  const { conditionName, symptomKeywords, specialty } = req.body;
+  try {
+    const entry = await prisma.aiKnowledgeBase.update({ where: { id: req.params.id }, data: { conditionName, symptomKeywords, specialty } });
     res.json(entry);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: 'Failed to update entry' });
   }
 });
 
-// DELETE /api/admin/ai-knowledge-base/:id
+router.delete('/knowledge-base/:id', async (req, res) => {
+  try {
+    await prisma.aiKnowledgeBase.delete({ where: { id: req.params.id } });
+    res.json({ message: 'Entry deleted' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete entry' });
+  }
+});
+
+// Legacy routes
+router.post('/ai-knowledge-base', async (req, res) => {
+  const { conditionName, symptomKeywords, specialty } = req.body;
+  try {
+    const entry = await prisma.aiKnowledgeBase.create({ data: { conditionName, symptomKeywords, specialty } });
+    res.status(201).json(entry);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create entry' });
+  }
+});
+router.put('/ai-knowledge-base/:id', async (req, res) => {
+  const { conditionName, symptomKeywords, specialty } = req.body;
+  try {
+    const entry = await prisma.aiKnowledgeBase.update({ where: { id: req.params.id }, data: { conditionName, symptomKeywords, specialty } });
+    res.json(entry);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update entry' });
+  }
+});
 router.delete('/ai-knowledge-base/:id', async (req, res) => {
   try {
     await prisma.aiKnowledgeBase.delete({ where: { id: req.params.id } });
     res.json({ message: 'Entry deleted' });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: 'Failed to delete entry' });
   }
 });
 
-// POST /api/admin/ai-knowledge-base
-router.post('/ai-knowledge-base', async (req, res) => {
-  const { conditionName, symptomKeywords, specialty } = req.body;
-  try {
-    const entry = await prisma.aiKnowledgeBase.create({
-      data: { conditionName, symptomKeywords, specialty },
-    });
-    res.status(201).json(entry);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to create entry' });
-  }
-});
-
-// PUT /api/admin/doctors/:id/availability
 router.put('/doctors/:id/availability', async (req, res) => {
   const { availability } = req.body;
   if (!Array.isArray(availability)) return res.status(400).json({ error: 'availability must be an array' });
-
   try {
     await prisma.availability.deleteMany({ where: { doctorId: req.params.id } });
-    await prisma.availability.createMany({
-      data: availability.map(a => ({ ...a, doctorId: req.params.id })),
-    });
+    await prisma.availability.createMany({ data: availability.map(a => ({ ...a, doctorId: req.params.id })) });
     res.json({ message: 'Availability updated' });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: 'Failed to update availability' });
   }
 });

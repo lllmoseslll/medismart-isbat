@@ -40,7 +40,7 @@ export default function PatientDashboard() {
 
       {/* Guidance banner */}
       {banner && (
-        <div className="flex items-start gap-3 bg-teal-600 text-white rounded-2xl px-5 py-4 mb-7 shadow-sm">
+        <div className="flex items-start gap-3 bg-teal-600 text-white px-5 py-4 mb-7 shadow-sm">
           <span className="text-xl flex-shrink-0">👋</span>
           <div className="flex-1">
             <p className="font-semibold text-sm" style={{ fontFamily: 'Outfit,sans-serif' }}>Welcome to your health dashboard</p>
@@ -79,7 +79,7 @@ export default function PatientDashboard() {
 
           {/* Next appointment */}
           {next ? (
-            <div className="rounded-2xl p-6 text-white shadow-lg"
+            <div className="-2xl p-6 text-white shadow-lg"
               style={{ background: 'linear-gradient(135deg,#0c4a6e 0%,#0369a1 60%,#0f766e 100%)' }}>
               <p className="text-xs font-bold text-teal-300 uppercase tracking-widest mb-3">Next appointment</p>
               <div className="flex items-start justify-between">
@@ -100,7 +100,7 @@ export default function PatientDashboard() {
             </div>
           ) : !loading && (
             <div className="card border-2 border-dashed border-slate-200 flex flex-col items-center py-10 text-center">
-              <div className="h-12 w-12 rounded-xl bg-teal-50 flex items-center justify-center mb-3">
+              <div className="h-12 w-12 bg-teal-50 flex items-center justify-center mb-3">
                 <svg className="h-6 w-6 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -117,7 +117,7 @@ export default function PatientDashboard() {
               <Link href="/patient/appointments" className="text-sm text-teal-600 hover:text-teal-700 font-semibold">View all →</Link>
             </div>
             {loading ? (
-              <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-14 bg-slate-100 rounded-xl animate-pulse" />)}</div>
+              <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-14 bg-slate-100 animate-pulse" />)}</div>
             ) : appointments.length === 0 ? (
               <p className="text-slate-400 text-sm py-6 text-center">No appointments yet.</p>
             ) : (
@@ -125,7 +125,7 @@ export default function PatientDashboard() {
                 {appointments.slice(0, 5).map(a => (
                   <div key={a.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-xl bg-teal-50 flex items-center justify-center text-teal-700 font-bold text-sm">
+                      <div className="h-9 w-9 bg-teal-50 flex items-center justify-center text-teal-700 font-bold text-sm">
                         {a.doctor.name.charAt(4) || 'D'}
                       </div>
                       <div>
@@ -155,7 +155,7 @@ export default function PatientDashboard() {
                 { href: '/patient/profile', icon: '👤', label: 'Update profile', sub: 'Medical history & info', hover: 'hover:bg-purple-50 hover:border-purple-200' },
               ].map(a => (
                 <Link key={a.href} href={a.href}
-                  className={`flex items-center gap-3 p-3 rounded-xl border border-slate-100 transition-all duration-150 group ${a.hover}`}>
+                  className={`flex items-center gap-3 p-3 border border-slate-100 transition-all duration-150 group ${a.hover}`}>
                   <span className="text-xl">{a.icon}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-slate-800">{a.label}</p>
@@ -169,7 +169,7 @@ export default function PatientDashboard() {
             </div>
           </div>
 
-          <div className="rounded-2xl p-5 text-white"
+          <div className="-2xl p-5 text-white"
             style={{ background: 'linear-gradient(135deg,#0d9488,#0f766e)' }}>
             <div className="text-3xl mb-3">🧠</div>
             <h3 className="font-bold mb-1 text-sm" style={{ fontFamily: 'Outfit,sans-serif' }}>Feeling unwell?</h3>
@@ -177,7 +177,7 @@ export default function PatientDashboard() {
               Describe your symptoms and MediSmart AI will recommend which specialist to see.
             </p>
             <Link href="/patient/symptoms"
-              className="block text-center bg-white text-teal-700 font-bold px-4 py-2.5 rounded-xl text-sm hover:bg-teal-50 transition-colors">
+              className="block text-center bg-white text-teal-700 font-bold px-4 py-2.5 text-sm hover:bg-teal-50 transition-colors">
               Start AI analysis →
             </Link>
           </div>

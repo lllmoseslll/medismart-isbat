@@ -33,12 +33,12 @@ export default function ReportsPage() {
           <h1 className="text-2xl font-bold text-brand-900" style={{ fontFamily: 'Outfit,sans-serif' }}>Reports & Analytics</h1>
           <p className="text-slate-400 text-sm mt-0.5">System-wide statistics and activity breakdown.</p>
         </div>
-        <span className="text-xs text-slate-400 bg-white border border-slate-200 px-3 py-1.5 rounded-lg">
+        <span className="text-xs text-slate-400 bg-white border border-slate-200 px-3 py-1.5">
           Generated {new Date().toLocaleString()}
         </span>
       </div>
 
-      <div className="flex items-start gap-2.5 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-7 text-sm text-blue-800">
+      <div className="flex items-start gap-2.5 bg-blue-50 border border-blue-200 px-4 py-3 mb-7 text-sm text-blue-800">
         <span className="mt-0.5">💡</span>
         <span>Live statistics across all appointments and users. Charts and tables <strong>refresh on page load</strong>.</span>
       </div>
@@ -62,7 +62,7 @@ export default function ReportsPage() {
               <XAxis dataKey="status" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip />
-              <Bar dataKey="count" radius={[6,6,0,0]}>
+              <Bar dataKey="count" radius={[0,0,0,0]}>
                 {barData.map(e => <Cell key={e.status} fill={STATUS_COLORS[e.status] || '#94a3b8'} />)}
               </Bar>
             </BarChart>

@@ -55,7 +55,7 @@ export default function Home() {
         {/* Navbar */}
         <nav className="relative z-10 flex items-center justify-between px-10 py-6">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl flex items-center justify-center shadow-lg"
+            <div className="h-9 w-9 flex items-center justify-center shadow-lg"
               style={{ background: 'linear-gradient(135deg,#0d9488,#0284c7)' }}>
               <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
@@ -66,11 +66,11 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-2">
             <Link href="/login"
-              className="text-white/80 hover:text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-white/10 transition-all">
+              className="text-white/80 hover:text-white text-sm font-medium px-5 py-2.5 hover:bg-white/10 transition-all">
               Sign In
             </Link>
             <Link href="/register"
-              className="bg-teal-500 hover:bg-teal-400 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-teal-500/30">
+              className="bg-teal-500 hover:bg-teal-400 text-white text-sm font-semibold px-5 py-2.5 transition-all shadow-lg shadow-teal-500/30">
               Get Started
             </Link>
           </div>
@@ -78,8 +78,8 @@ export default function Home() {
 
         {/* Hero content */}
         <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-500/15 border border-teal-400/25 text-teal-300 text-sm font-medium mb-8 backdrop-blur-sm">
-            <span className="h-2 w-2 rounded-full bg-teal-400 animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-teal-500/15 border border-teal-400/25 text-teal-300 text-sm font-medium mb-8 backdrop-blur-sm">
+            <span className="h-2 w-2 bg-teal-400 animate-pulse" />
             Powered by MediSmart AI · Gemini 2.5
           </div>
 
@@ -96,7 +96,7 @@ export default function Home() {
           </p>
 
           {/* Guidance note */}
-          <div className="flex items-center gap-2 bg-white/8 backdrop-blur-sm border border-white/15 rounded-xl px-5 py-3 text-sm text-white/70 mb-10">
+          <div className="flex items-center gap-2 bg-white/8 backdrop-blur-sm border border-white/15 px-5 py-3 text-sm text-white/70 mb-10">
             <span>💡</span>
             <span>
               New here? Click <strong className="text-teal-300 font-semibold">Get Started</strong> to create a free patient account,
@@ -106,12 +106,12 @@ export default function Home() {
 
           <div className="flex items-center gap-4">
             <Link href="/register"
-              className="bg-teal-500 hover:bg-teal-400 text-white font-bold px-10 py-4 rounded-2xl transition-all duration-200 shadow-2xl shadow-teal-500/30 text-base"
+              className="bg-teal-500 hover:bg-teal-400 text-white font-bold px-10 py-4 transition-all duration-200 shadow-2xl shadow-teal-500/30 text-base"
               style={{ fontFamily: 'Outfit,sans-serif' }}>
               Get Started Free →
             </Link>
             <Link href="/login"
-              className="border border-white/25 text-white hover:bg-white/10 font-semibold px-10 py-4 rounded-2xl transition-all backdrop-blur-sm text-base">
+              className="border border-white/25 text-white hover:bg-white/10 font-semibold px-10 py-4 transition-all backdrop-blur-sm text-base">
               Sign In
             </Link>
           </div>
@@ -141,7 +141,7 @@ export default function Home() {
           <div className="grid grid-cols-3 gap-6">
             {features.map(f => (
               <div key={f.title}
-                className={`bg-gradient-to-br ${f.from} ${f.to} border ${f.border} rounded-3xl p-8 hover:shadow-xl transition-all duration-300 hover:-translate-y-1.5 group`}>
+                className={`bg-gradient-to-br ${f.from} ${f.to} border ${f.border} p-8 hover:shadow-xl transition-all duration-300 hover:-translate-y-1.5 group`}>
                 <div className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-300">{f.emoji}</div>
                 <h3 className={`text-lg font-bold mb-3 ${f.text}`} style={{ fontFamily: 'Outfit,sans-serif' }}>{f.title}</h3>
                 <p className="text-slate-600 leading-relaxed text-sm">{f.body}</p>
@@ -170,7 +170,7 @@ export default function Home() {
       {/* ── Footer ───────────────────────────── */}
       <footer className="py-10 px-6 text-center" style={{ backgroundColor: '#082f49' }}>
         <div className="flex items-center justify-center gap-2 mb-2">
-          <div className="h-6 w-6 rounded-lg flex items-center justify-center"
+          <div className="h-6 w-6 flex items-center justify-center"
             style={{ background: 'linear-gradient(135deg,#0d9488,#0284c7)' }}>
             <svg className="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}

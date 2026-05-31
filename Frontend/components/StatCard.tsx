@@ -19,13 +19,13 @@ const colorMap = {
 export default function StatCard({ title, value, icon, color = 'teal', sub, trend }: StatCardProps) {
   const c = colorMap[color];
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+    <div className="bg-white border border-slate-100 p-5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
       <div className="flex items-start justify-between mb-4">
-        <div className={`h-11 w-11 rounded-xl flex items-center justify-center ring-1 ${c.bg} ${c.ring}`}>
+        <div className={`h-11 w-11 flex items-center justify-center ring-1 ${c.bg} ${c.ring}`}>
           <span className={`${c.icon} [&>svg]:h-5 [&>svg]:w-5`}>{icon}</span>
         </div>
         {trend && (
-          <span className="text-xs font-semibold text-green-600 bg-green-50 border border-green-100 px-2 py-0.5 rounded-full">
+          <span className="text-xs font-semibold text-green-600 bg-green-50 border border-green-100 px-2 py-0.5">
             {trend}
           </span>
         )}

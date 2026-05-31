@@ -57,7 +57,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Guidance note */}
-      <div className="flex items-start gap-2.5 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-7 text-sm text-blue-800">
+      <div className="flex items-start gap-2.5 bg-blue-50 border border-blue-200 px-4 py-3 mb-7 text-sm text-blue-800">
         <span className="mt-0.5">💡</span>
         <span>Keep your profile up to date so doctors have accurate information — especially allergies and pre-existing conditions — before your consultation.</span>
       </div>
@@ -120,24 +120,24 @@ export default function ProfilePage() {
             </div>
 
             {success && (
-              <div className="flex items-center gap-2 bg-teal-50 border border-teal-200 text-teal-800 text-sm rounded-xl px-4 py-3">
+              <div className="flex items-center gap-2 bg-teal-50 border border-teal-200 text-teal-800 text-sm px-4 py-3">
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 Profile updated successfully.
               </div>
             )}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">{error}</div>
+              <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3">{error}</div>
             )}
 
             <button type="submit" className="btn-primary px-8 py-3" disabled={saving}>
-              {saving ? <span className="flex items-center gap-2"><span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Saving…</span> : 'Save changes'}
+              {saving ? <span className="flex items-center gap-2"><span className="h-4 w-4 border-2 border-white/30 border-t-white animate-spin" />Saving…</span> : 'Save changes'}
             </button>
           </div>
 
           {/* Profile card */}
           <div className="card self-start sticky top-6">
             <div className="flex flex-col items-center text-center mb-5">
-              <div className="h-20 w-20 rounded-2xl flex items-center justify-center text-white text-3xl font-bold mb-3"
+              <div className="h-20 w-20 flex items-center justify-center text-white text-3xl font-bold mb-3"
                 style={{ background: 'linear-gradient(135deg,#0d9488,#0369a1)' }}>
                 {form.name.charAt(0).toUpperCase() || '?'}
               </div>
@@ -161,7 +161,7 @@ export default function ProfilePage() {
                   <span className="text-slate-400 text-xs font-semibold uppercase block mb-1.5">Allergies</span>
                   <div className="flex flex-wrap gap-1">
                     {form.allergies.split(',').filter(Boolean).map(a => (
-                      <span key={a} className="text-xs bg-red-50 text-red-700 border border-red-100 rounded-full px-2 py-0.5">{a.trim()}</span>
+                      <span key={a} className="text-xs bg-red-50 text-red-700 border border-red-100 px-2 py-0.5">{a.trim()}</span>
                     ))}
                   </div>
                 </div>

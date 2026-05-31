@@ -101,10 +101,10 @@ export default function AppointmentsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit mb-7">
+      <div className="flex gap-1 bg-slate-100 p-1 w-fit mb-7">
         {(['upcoming','book'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
-            className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all duration-150 ${tab === t ? 'bg-white text-brand-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+            className={`px-6 py-2 text-sm font-semibold transition-all duration-150 ${tab === t ? 'bg-white text-brand-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
             {t === 'book' ? '+ Book new' : 'Upcoming'}
           </button>
         ))}
@@ -114,7 +114,7 @@ export default function AppointmentsPage() {
       {tab === 'upcoming' && (
         <div className="space-y-5">
           {bookSuccess && (
-            <div className="bg-teal-50 border border-teal-200 text-teal-800 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
+            <div className="bg-teal-50 border border-teal-200 text-teal-800 text-sm px-4 py-3 flex items-center gap-2">
               <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -123,10 +123,10 @@ export default function AppointmentsPage() {
           )}
 
           {loading ? (
-            <div className="space-y-3">{[1,2,3].map(i=><div key={i} className="h-24 bg-slate-100 rounded-2xl animate-pulse"/>)}</div>
+            <div className="space-y-3">{[1,2,3].map(i=><div key={i} className="h-24 bg-slate-100 animate-pulse"/>)}</div>
           ) : upcoming.length === 0 ? (
             <div className="card text-center py-14">
-              <div className="h-14 w-14 rounded-2xl bg-teal-50 flex items-center justify-center mx-auto mb-4">
+              <div className="h-14 w-14 bg-teal-50 flex items-center justify-center mx-auto mb-4">
                 <svg className="h-7 w-7 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -155,7 +155,7 @@ export default function AppointmentsPage() {
         <div className="grid grid-cols-3 gap-6">
           <div className="col-span-2 space-y-5">
             {/* Guidance note */}
-            <div className="flex items-start gap-2.5 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-800">
+            <div className="flex items-start gap-2.5 bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-800">
               <span className="mt-0.5">💡</span>
               <span>Pick a specialty, select a doctor, choose a date and time slot, then confirm your booking.</span>
             </div>
@@ -172,9 +172,9 @@ export default function AppointmentsPage() {
                   <p className="text-slate-400 text-sm">No doctors found.</p>
                 ) : doctors.map(d => (
                   <button key={d.userId} onClick={() => { setSelectedDoc(d); setDate(''); setTime(''); }}
-                    className={`w-full text-left p-4 rounded-xl border transition-all duration-150 ${selectedDoctor?.userId === d.userId ? 'border-teal-400 bg-teal-50 ring-2 ring-teal-200' : 'border-slate-200 hover:border-teal-200 bg-white'}`}>
+                    className={`w-full text-left p-4 border transition-all duration-150 ${selectedDoctor?.userId === d.userId ? 'border-teal-400 bg-teal-50 ring-2 ring-teal-200' : 'border-slate-200 hover:border-teal-200 bg-white'}`}>
                     <div className="flex items-start gap-3">
-                      <div className="h-11 w-11 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0"
+                      <div className="h-11 w-11 flex items-center justify-center text-white font-bold flex-shrink-0"
                         style={{ background: 'linear-gradient(135deg,#0d9488,#0369a1)' }}>
                         {d.name.charAt(3) || 'D'}
                       </div>
@@ -184,7 +184,7 @@ export default function AppointmentsPage() {
                         {d.bio && <p className="text-xs text-slate-400 mt-1 line-clamp-1">{d.bio}</p>}
                         <div className="flex gap-1 mt-2">
                           {d.availability.map(a => (
-                            <span key={a.dayOfWeek} className="text-xs bg-slate-100 text-slate-500 rounded px-1.5 py-0.5">{DAYS[a.dayOfWeek]}</span>
+                            <span key={a.dayOfWeek} className="text-xs bg-slate-100 text-slate-500  px-1.5 py-0.5">{DAYS[a.dayOfWeek]}</span>
                           ))}
                         </div>
                       </div>
@@ -215,7 +215,7 @@ export default function AppointmentsPage() {
                       <div className="flex flex-wrap gap-2 mt-2">
                         {slots.map(slot => (
                           <button key={slot} onClick={() => setTime(slot)}
-                            className={`px-3 py-2 rounded-xl border text-sm font-medium transition-all ${selectedTime === slot ? 'bg-teal-600 text-white border-teal-600' : 'border-slate-200 text-slate-700 hover:border-teal-300 bg-white'}`}>
+                            className={`px-3 py-2 border text-sm font-medium transition-all ${selectedTime === slot ? 'bg-teal-600 text-white border-teal-600' : 'border-slate-200 text-slate-700 hover:border-teal-300 bg-white'}`}>
                             {slot}
                           </button>
                         ))}
@@ -227,12 +227,12 @@ export default function AppointmentsPage() {
             )}
 
             {bookError && (
-              <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">{bookError}</div>
+              <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3">{bookError}</div>
             )}
 
             {selectedDoctor && selectedDate && selectedTime && (
               <button onClick={bookAppointment} className="btn-primary px-8 py-3 text-base" disabled={booking}>
-                {booking ? <span className="flex items-center gap-2"><span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Booking…</span> : `Confirm with ${selectedDoctor.name} →`}
+                {booking ? <span className="flex items-center gap-2"><span className="h-4 w-4 border-2 border-white/30 border-t-white animate-spin" />Booking…</span> : `Confirm with ${selectedDoctor.name} →`}
               </button>
             )}
           </div>
@@ -247,7 +247,7 @@ export default function AppointmentsPage() {
                 <div className="flex justify-between"><span className="text-slate-500">Date</span><span className="text-slate-700">{selectedDate || '—'}</span></div>
                 <div className="flex justify-between"><span className="text-slate-500">Time</span><span className="font-semibold text-teal-700">{selectedTime || '—'}</span></div>
                 {sessionIdParam && (
-                  <div className="bg-teal-50 border border-teal-200 rounded-xl px-3 py-2 text-xs text-teal-700 font-medium mt-2">
+                  <div className="bg-teal-50 border border-teal-200 px-3 py-2 text-xs text-teal-700 font-medium mt-2">
                     🧠 AI assessment attached
                   </div>
                 )}
@@ -267,7 +267,7 @@ function ApptCard({ appt: a, onCancel, past }: { appt: Appointment; onCancel: (i
     <div className="card hover:shadow-md transition-shadow duration-200">
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-4">
-          <div className="h-12 w-12 rounded-2xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
+          <div className="h-12 w-12 flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
             style={{ background: 'linear-gradient(135deg,#0d9488,#0369a1)' }}>
             {a.doctor.name.charAt(4) || 'D'}
           </div>

@@ -40,23 +40,23 @@ export default function DoctorAppointmentsPage() {
       </div>
 
       {/* Guidance note */}
-      <div className="flex items-start gap-2.5 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-6 text-sm text-blue-800">
+      <div className="flex items-start gap-2.5 bg-blue-50 border border-blue-200 px-4 py-3 mb-6 text-sm text-blue-800">
         <span className="mt-0.5">💡</span>
         <span>Click <strong>View →</strong> to open an appointment, review the patient's MediSmart AI symptom report, and write your consultation notes.</span>
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit mb-6">
+      <div className="flex gap-1 bg-slate-100 p-1 w-fit mb-6">
         {filters.map(f => (
           <button key={f} onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all capitalize ${filter === f ? 'bg-white text-brand-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+            className={`px-4 py-2 text-sm font-semibold transition-all capitalize ${filter === f ? 'bg-white text-brand-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
             {f}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <div className="space-y-3">{[1,2,3].map(i=><div key={i} className="h-24 bg-slate-100 rounded-2xl animate-pulse"/>)}</div>
+        <div className="space-y-3">{[1,2,3].map(i=><div key={i} className="h-24 bg-slate-100 animate-pulse"/>)}</div>
       ) : sorted.length === 0 ? (
         <div className="card text-center py-14">
           <p className="text-slate-400">No appointments found.</p>
@@ -70,7 +70,7 @@ export default function DoctorAppointmentsPage() {
               <div key={a.id} className="card hover:shadow-md transition-all duration-200">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
-                    <div className="h-12 w-12 rounded-2xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
+                    <div className="h-12 w-12 flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
                       style={{ background: 'linear-gradient(135deg,#0d9488,#0369a1)' }}>
                       {name.charAt(0).toUpperCase()}
                     </div>
@@ -92,9 +92,9 @@ export default function DoctorAppointmentsPage() {
                     {a.status === 'pending' && (
                       <>
                         <button onClick={() => updateStatus(a.id, 'confirmed')}
-                          className="text-xs bg-teal-600 hover:bg-teal-700 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors">Confirm</button>
+                          className="text-xs bg-teal-600 hover:bg-teal-700 text-white font-semibold px-3 py-1.5 transition-colors">Confirm</button>
                         <button onClick={() => updateStatus(a.id, 'cancelled')}
-                          className="text-xs bg-red-50 hover:bg-red-100 text-red-700 font-semibold px-3 py-1.5 rounded-lg border border-red-200 transition-colors">Decline</button>
+                          className="text-xs bg-red-50 hover:bg-red-100 text-red-700 font-semibold px-3 py-1.5 border border-red-200 transition-colors">Decline</button>
                       </>
                     )}
                     <span className={`badge-${a.status}`}>{a.status}</span>

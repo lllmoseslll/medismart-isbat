@@ -77,7 +77,7 @@ export default function AppointmentDetailPage() {
       </div>
 
       {/* Guidance note */}
-      <div className="flex items-start gap-2.5 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-6 text-sm text-blue-800">
+      <div className="flex items-start gap-2.5 bg-blue-50 border border-blue-200 px-4 py-3 mb-6 text-sm text-blue-800">
         <span className="mt-0.5">💡</span>
         <span>Review the patient's details and MediSmart AI assessment below, then complete your consultation by writing notes in the form at the bottom.</span>
       </div>
@@ -89,7 +89,7 @@ export default function AppointmentDetailPage() {
           <div className="card">
             <h2 className="font-bold text-brand-900 mb-4" style={{ fontFamily: 'Outfit,sans-serif' }}>Patient information</h2>
             <div className="flex items-start gap-4">
-              <div className="h-14 w-14 rounded-2xl flex items-center justify-center text-white text-xl font-bold flex-shrink-0"
+              <div className="h-14 w-14 flex items-center justify-center text-white text-xl font-bold flex-shrink-0"
                 style={{ background: 'linear-gradient(135deg,#0d9488,#0369a1)' }}>
                 {(profile?.name || appt.patient.email).charAt(0).toUpperCase()}
               </div>
@@ -119,13 +119,13 @@ export default function AppointmentDetailPage() {
               {aiOpen && (
                 <div className="mt-4 pt-4 border-t border-slate-100">
                   {appt.session.aiResult?.summary && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4 text-sm text-blue-800">{appt.session.aiResult.summary}</div>
+                    <div className="bg-blue-50 border border-blue-200 p-3 mb-4 text-sm text-blue-800">{appt.session.aiResult.summary}</div>
                   )}
                   <div className="mb-3">
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Reported symptoms</p>
                     <div className="flex flex-wrap gap-1.5">
                       {appt.session.symptoms.map((s, i) => (
-                        <span key={i} className="text-xs bg-slate-100 text-slate-700 border border-slate-200 rounded-full px-2.5 py-1">{s}</span>
+                        <span key={i} className="text-xs bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-1">{s}</span>
                       ))}
                     </div>
                   </div>
@@ -134,8 +134,8 @@ export default function AppointmentDetailPage() {
                       <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">AI conditions</p>
                       <div className="space-y-2">
                         {appt.session.aiResult.conditions.slice(0, 3).map((c, i) => (
-                          <div key={i} className="flex items-center gap-3 p-2.5 bg-slate-50 rounded-xl">
-                            <div className="h-2 w-2 rounded-full bg-teal-500 flex-shrink-0" />
+                          <div key={i} className="flex items-center gap-3 p-2.5 bg-slate-50">
+                            <div className="h-2 w-2 bg-teal-500 flex-shrink-0" />
                             <span className="text-sm font-semibold text-slate-800">{c.condition}</span>
                             <span className="text-xs text-teal-600 font-medium ml-auto">{c.confidence}% match</span>
                           </div>
@@ -154,9 +154,9 @@ export default function AppointmentDetailPage() {
               <h2 className="font-bold text-brand-900 mb-4" style={{ fontFamily: 'Outfit,sans-serif' }}>Consultation notes</h2>
               {appt.notes.map(n => (
                 <div key={n.id} className="space-y-3 text-sm">
-                  {n.notes     && <div><p className="text-xs font-semibold text-slate-400 uppercase mb-1">Notes</p><p className="text-slate-700 bg-slate-50 rounded-xl p-3">{n.notes}</p></div>}
-                  {n.diagnosis && <div><p className="text-xs font-semibold text-slate-400 uppercase mb-1">Diagnosis</p><p className="text-slate-700 bg-teal-50 rounded-xl p-3 text-teal-900">{n.diagnosis}</p></div>}
-                  {n.treatment && <div><p className="text-xs font-semibold text-slate-400 uppercase mb-1">Treatment plan</p><p className="text-slate-700 bg-blue-50 rounded-xl p-3 text-blue-900">{n.treatment}</p></div>}
+                  {n.notes     && <div><p className="text-xs font-semibold text-slate-400 uppercase mb-1">Notes</p><p className="text-slate-700 bg-slate-50 p-3">{n.notes}</p></div>}
+                  {n.diagnosis && <div><p className="text-xs font-semibold text-slate-400 uppercase mb-1">Diagnosis</p><p className="text-slate-700 bg-teal-50 p-3 text-teal-900">{n.diagnosis}</p></div>}
+                  {n.treatment && <div><p className="text-xs font-semibold text-slate-400 uppercase mb-1">Treatment plan</p><p className="text-slate-700 bg-blue-50 p-3 text-blue-900">{n.treatment}</p></div>}
                   <p className="text-xs text-slate-400">{new Date(n.createdAt).toLocaleString()}</p>
                 </div>
               ))}
@@ -187,7 +187,7 @@ export default function AppointmentDetailPage() {
                 </div>
                 {saveErr && <p className="text-red-600 text-sm">{saveErr}</p>}
                 <button type="submit" className="btn-primary" disabled={saving}>
-                  {saving ? <span className="flex items-center gap-2"><span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Saving…</span> : 'Save & complete appointment'}
+                  {saving ? <span className="flex items-center gap-2"><span className="h-4 w-4 border-2 border-white/30 border-t-white animate-spin" />Saving…</span> : 'Save & complete appointment'}
                 </button>
               </div>
             </form>
