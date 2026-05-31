@@ -76,7 +76,7 @@ Optional:
 ### Step 1 — Clone the repository
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/lllmoseslll/medismart-isbat.git
 cd isbat_mediSmart
 ```
 
