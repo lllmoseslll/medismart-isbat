@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const prisma = require('./prisma');
+const { startReminderScheduler } = require('./services/queue');
 
 const authRoutes        = require('./routes/auth');
 const patientRoutes     = require('./routes/patients');
@@ -35,6 +36,7 @@ const PORT = process.env.PORT || 4000;
 app.listen(PORT, async () => {
   console.log(`MediSmart API running on http://localhost:${PORT}`);
   await autoSeedIfEmpty();
+  startReminderScheduler();
 });
 
 async function autoSeedIfEmpty() {

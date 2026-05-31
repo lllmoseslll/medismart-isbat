@@ -2,7 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const prisma = require('../prisma');
 const { requireAuth } = require('../middleware/auth');
-const { notifyAppointmentBooked, scheduleNotification } = require('../services/queue');
+const { notifyAppointmentBooked, notifyStatusChange, scheduleNotification } = require('../services/queue');
 
 const router = express.Router();
 
@@ -78,14 +78,18 @@ router.post(
         },
       });
 
-      const patient = await prisma.patientProfile.findUnique({ where: { userId: patientId } });
+      const patient     = await prisma.patientProfile.findUnique({ where: { userId: patientId } });
       const patientUser = await prisma.user.findUnique({ where: { id: patientId }, select: { email: true } });
+      const session     = sessionId ? await prisma.symptomSession.findUnique({ where: { id: sessionId } }) : null;
 
       await notifyAppointmentBooked(
         appointment,
         patient?.name || patientUser?.email || 'Patient',
         patientUser?.email || '',
-        doctor.name
+        doctor.name,
+        doctor.user.email,
+        doctor.specialty,
+        session?.symptoms || []
       );
 
       res.status(201).json(appointment);
@@ -124,13 +128,19 @@ router.put(
         },
       });
 
-      if (status === 'cancelled') {
-        await scheduleNotification({
-          userId: appt.patientId,
-          type: 'appointment_cancelled',
-          message: `Your appointment on ${new Date(appt.scheduledAt).toLocaleString()} has been cancelled.`,
-          channel: 'push',
-        });
+      if (status && ['confirmed', 'cancelled', 'completed'].includes(status)) {
+        const patientUser = await prisma.user.findUnique({ where: { id: appt.patientId }, select: { email: true } });
+        const patientProf = await prisma.patientProfile.findUnique({ where: { userId: appt.patientId } });
+        const doctor      = await prisma.doctorProfile.findUnique({ where: { userId: appt.doctorId } });
+        if (patientUser && doctor) {
+          await notifyStatusChange(
+            appt,
+            patientProf?.name || patientUser.email,
+            patientUser.email,
+            doctor.name,
+            status
+          );
+        }
       }
 
       res.json(updated);
