@@ -10,10 +10,11 @@ interface User {
   doctorProfile:  { name: string; specialty: string; licenseNumber: string } | null;
 }
 
-type Modal = 'create' | 'edit' | 'reset' | null;
+type Modal = 'create' | 'edit' | 'reset' | 'delete' | null;
 
 const ROLES = ['patient', 'doctor', 'admin'] as const;
-const SPECIALTIES = ['General Practice','Cardiology','Neurology','Dermatology','Psychiatry','Orthopedics','Gastroenterology','Pulmonology','Endocrinology','Urology','Rheumatology','Ophthalmology'];
+const SPECIALTIES = ['General Practice','Cardiology','Neurology','Dermatology','Psychiatry','Orthopedics',
+  'Gastroenterology','Pulmonology','Endocrinology','Urology','Rheumatology','Ophthalmology','Haematology'];
 
 const roleStyle: Record<string, string> = {
   admin:   'bg-violet-100 text-violet-800 border-violet-200',
@@ -21,26 +22,32 @@ const roleStyle: Record<string, string> = {
   patient: 'bg-slate-100 text-slate-600 border-slate-200',
 };
 
+function displayName(u: User) {
+  return u.patientProfile?.name || u.doctorProfile?.name || u.email;
+}
+
 export default function UsersPage() {
   const me = getUser();
-  const [users, setUsers]     = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch]   = useState('');
-  const [roleFilter, setRole] = useState('all');
-  const [modal, setModal]     = useState<Modal>(null);
-  const [target, setTarget]   = useState<User | null>(null);
-  const [error, setError]     = useState('');
-  const [saving, setSaving]   = useState(false);
+  const [users, setUsers]       = useState<User[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [search, setSearch]     = useState('');
+  const [roleFilter, setRole]   = useState('all');
+  const [modal, setModal]       = useState<Modal>(null);
+  const [target, setTarget]     = useState<User | null>(null);
+  const [error, setError]       = useState('');
+  const [saving, setSaving]     = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const [form, setForm] = useState({
-    name: '', email: '', password: '', confirmPassword: '', role: 'patient',
-    specialty: 'General Practice', licenseNumber: '', bio: '',
+    name: '', email: '', password: '', confirmPassword: '',
+    role: 'patient', specialty: 'General Practice', licenseNumber: '', bio: '',
   });
   const [newPassword, setNewPassword] = useState('');
 
   useEffect(() => { load(); }, []);
 
   async function load() {
+    setLoading(true);
     try { setUsers(await api.admin.listUsers() as User[]); }
     finally { setLoading(false); }
   }
@@ -49,19 +56,18 @@ export default function UsersPage() {
     setForm({ name: '', email: '', password: '', confirmPassword: '', role: 'patient', specialty: 'General Practice', licenseNumber: '', bio: '' });
     setError(''); setModal('create');
   }
-
   function openEdit(u: User) {
-    const name = u.patientProfile?.name || u.doctorProfile?.name || '';
-    setForm({ name, email: u.email, password: '', confirmPassword: '', role: u.role, specialty: u.doctorProfile?.specialty || 'General Practice', licenseNumber: u.doctorProfile?.licenseNumber || '', bio: '' });
+    setForm({ name: displayName(u), email: u.email, password: '', confirmPassword: '',
+      role: u.role, specialty: u.doctorProfile?.specialty || 'General Practice',
+      licenseNumber: u.doctorProfile?.licenseNumber || '', bio: '' });
     setTarget(u); setError(''); setModal('edit');
   }
-
-  function openReset(u: User) { setTarget(u); setNewPassword(''); setError(''); setModal('reset'); }
-
+  function openReset(u: User)  { setTarget(u); setNewPassword(''); setError(''); setModal('reset'); }
+  function openDelete(u: User) { setTarget(u); setModal('delete'); }
   function close() { setModal(null); setTarget(null); setError(''); }
 
   function setF(field: string) {
-    return (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    return (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
       setForm(f => ({ ...f, [field]: e.target.value }));
   }
 
@@ -98,19 +104,23 @@ export default function UsersPage() {
     finally { setSaving(false); }
   }
 
-  async function handleDelete(u: User) {
-    if (u.id === me?.id) { alert('You cannot delete your own admin account.'); return; }
-    if (!confirm(`Delete user ${u.patientProfile?.name || u.doctorProfile?.name || u.email}? This is permanent.`)) return;
+  async function handleDelete() {
+    if (!target) return;
+    setDeleting(true);
     try {
-      await api.admin.deleteUser(u.id);
-      setUsers(prev => prev.filter(x => x.id !== u.id));
-    } catch (err: unknown) { alert(err instanceof Error ? err.message : 'Failed to delete user'); }
+      await api.admin.deleteUser(target.id);
+      setUsers(prev => prev.filter(x => x.id !== target.id));
+      close();
+    } catch (err: unknown) { setError(err instanceof Error ? err.message : 'Failed to delete user'); }
+    finally { setDeleting(false); }
   }
 
   const filtered = users.filter(u => {
-    const name = u.patientProfile?.name || u.doctorProfile?.name || u.email;
-    return (name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()))
-      && (roleFilter === 'all' || u.role === roleFilter);
+    const name = displayName(u);
+    const matchText = name.toLowerCase().includes(search.toLowerCase()) ||
+      u.email.toLowerCase().includes(search.toLowerCase());
+    const matchRole = roleFilter === 'all' || u.role === roleFilter;
+    return matchText && matchRole;
   });
 
   return (
@@ -125,13 +135,15 @@ export default function UsersPage() {
         </button>
       </div>
 
+      {/* Info banner */}
       <div className="bg-blue-50 border border-blue-200 px-4 py-3 mb-6 text-sm text-blue-800 flex items-start gap-2">
-        <span className="mt-0.5 text-base">
-          <svg className="h-4 w-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-        </span>
-        <span>You can create any user type, edit their details, reset their password, or delete them. You cannot delete your own admin account.</span>
+        <svg className="h-4 w-4 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span>Create any account type including Admin. Deleting a user permanently removes all their appointments, notes, and data. You cannot delete your own account.</span>
       </div>
 
+      {/* Filters */}
       <div className="flex gap-3 mb-5">
         <div className="relative">
           <HiOutlineSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base" />
@@ -146,10 +158,11 @@ export default function UsersPage() {
         </select>
       </div>
 
+      {/* Table */}
       {loading ? (
-        <div className="space-y-2">{[1,2,3,4].map(i=><div key={i} className="h-14 bg-slate-100 animate-pulse "/>)}</div>
+        <div className="space-y-2">{[1,2,3,4,5].map(i=><div key={i} className="h-14 bg-slate-100 animate-pulse"/>)}</div>
       ) : (
-        <div className="bg-white border border-slate-100 shadow-sm overflow-hidden ">
+        <div className="bg-white border border-slate-100 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
@@ -160,32 +173,34 @@ export default function UsersPage() {
             </thead>
             <tbody>
               {filtered.map(u => {
-                const name = u.patientProfile?.name || u.doctorProfile?.name || 'Unknown';
+                const name = displayName(u);
                 const isMe = u.id === me?.id;
                 return (
                   <tr key={u.id} className="border-b border-slate-50 hover:bg-slate-50/60 transition-colors">
                     <td className="px-4 py-3 font-semibold text-slate-900">
-                      {name} {isMe && <span className="text-xs text-slate-400 font-normal">(you)</span>}
+                      {name}{isMe && <span className="ml-1.5 text-xs text-slate-400 font-normal">(you)</span>}
                     </td>
-                    <td className="px-4 py-3 text-slate-500">{u.email}</td>
+                    <td className="px-4 py-3 text-slate-500 text-xs">{u.email}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-0.5  text-xs font-semibold border capitalize ${roleStyle[u.role] ?? roleStyle.patient}`}>{u.role}</span>
+                      <span className={`inline-flex items-center px-2 py-0.5 text-xs font-semibold border capitalize ${roleStyle[u.role] ?? roleStyle.patient}`}>
+                        {u.role}
+                      </span>
                     </td>
-                    <td className="px-4 py-3 text-slate-400 text-xs">{u.doctorProfile?.specialty || 'N/A'}</td>
-                    <td className="px-4 py-3 text-slate-400 text-xs">{new Date(u.createdAt).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-slate-400 text-xs">{u.doctorProfile?.specialty || '—'}</td>
+                    <td className="px-4 py-3 text-slate-400 text-xs">{new Date(u.createdAt).toLocaleDateString('en-UG')}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
-                        <button onClick={() => openEdit(u)}
-                          className="p-1.5 text-slate-400 hover:text-brand-700 hover:bg-blue-50  transition-colors" title="Edit">
+                        <button onClick={() => openEdit(u)} title="Edit"
+                          className="p-1.5 text-slate-400 hover:text-blue-700 hover:bg-blue-50 transition-colors">
                           <HiOutlinePencil className="text-base" />
                         </button>
-                        <button onClick={() => openReset(u)}
-                          className="p-1.5 text-slate-400 hover:text-amber-700 hover:bg-amber-50  transition-colors" title="Reset password">
+                        <button onClick={() => openReset(u)} title="Reset password"
+                          className="p-1.5 text-slate-400 hover:text-amber-700 hover:bg-amber-50 transition-colors">
                           <HiOutlineKey className="text-base" />
                         </button>
                         {!isMe && (
-                          <button onClick={() => handleDelete(u)}
-                            className="p-1.5 text-slate-400 hover:text-red-700 hover:bg-red-50  transition-colors" title="Delete">
+                          <button onClick={() => openDelete(u)} title="Delete user"
+                            className="p-1.5 text-slate-400 hover:text-red-700 hover:bg-red-50 transition-colors">
                             <HiOutlineTrash className="text-base" />
                           </button>
                         )}
@@ -202,10 +217,10 @@ export default function UsersPage() {
         </div>
       )}
 
-      {/* Modals */}
-      {modal && (
+      {/* ── Modals ───────────────────────────────────── */}
+      {modal && modal !== 'delete' && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white  shadow-xl w-full max-w-md">
+          <div className="bg-white shadow-xl w-full max-w-md">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
               <h2 className="font-bold text-brand-900" style={{ fontFamily: 'Outfit,sans-serif' }}>
                 {modal === 'create' ? 'Create user' : modal === 'edit' ? 'Edit user' : 'Reset password'}
@@ -216,38 +231,74 @@ export default function UsersPage() {
             </div>
 
             <div className="px-6 py-5">
-              {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2  mb-4">{error}</div>}
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 mb-4">{error}</div>
+              )}
 
+              {/* ── Create ── */}
               {modal === 'create' && (
                 <form onSubmit={handleCreate} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="col-span-2"><label className="label">Full name</label><input type="text" className="input" required value={form.name} onChange={setF('name')} /></div>
-                    <div className="col-span-2"><label className="label">Email</label><input type="email" className="input" required value={form.email} onChange={setF('email')} /></div>
-                    <div className="col-span-2">
-                      <label className="label">Role</label>
-                      <select className="input" value={form.role} onChange={setF('role')}>
-                        {ROLES.map(r => <option key={r} value={r} className="capitalize">{r.charAt(0).toUpperCase() + r.slice(1)}</option>)}
-                      </select>
+                  <div>
+                    <label className="label">Full name</label>
+                    <input type="text" className="input" required placeholder="Full name" value={form.name} onChange={setF('name')} />
+                  </div>
+                  <div>
+                    <label className="label">Email address</label>
+                    <input type="email" className="input" required placeholder="email@example.com" value={form.email} onChange={setF('email')} />
+                  </div>
+                  <div>
+                    <label className="label">Role</label>
+                    <select className="input" value={form.role} onChange={setF('role')}>
+                      {ROLES.map(r => (
+                        <option key={r} value={r}>
+                          {r === 'admin' ? '🛡️ Admin — Full system access' : r === 'doctor' ? '👩‍⚕️ Doctor — Manage appointments' : '🧑‍💼 Patient — Book appointments'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {form.role === 'doctor' && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="label">Specialty</label>
+                        <select className="input" value={form.specialty} onChange={setF('specialty')}>
+                          {SPECIALTIES.map(s=><option key={s}>{s}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="label">License no.</label>
+                        <input type="text" className="input" value={form.licenseNumber} onChange={setF('licenseNumber')} placeholder="MD-0001" />
+                      </div>
                     </div>
-                    {form.role === 'doctor' && (
-                      <>
-                        <div><label className="label">Specialty</label><select className="input" value={form.specialty} onChange={setF('specialty')}>{SPECIALTIES.map(s=><option key={s}>{s}</option>)}</select></div>
-                        <div><label className="label">License no.</label><input type="text" className="input" value={form.licenseNumber} onChange={setF('licenseNumber')} placeholder="MD-0001" /></div>
-                      </>
-                    )}
-                    <div><label className="label">Password</label><input type="password" className="input" required minLength={8} value={form.password} onChange={setF('password')} placeholder="Min 8 chars" /></div>
-                    <div><label className="label">Confirm</label><input type="password" className="input" required value={form.confirmPassword} onChange={setF('confirmPassword')} placeholder="Repeat" /></div>
+                  )}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="label">Password</label>
+                      <input type="password" className="input" required minLength={8} value={form.password} onChange={setF('password')} placeholder="Min 8 chars" />
+                    </div>
+                    <div>
+                      <label className="label">Confirm</label>
+                      <input type="password" className="input" required value={form.confirmPassword} onChange={setF('confirmPassword')} placeholder="Repeat" />
+                    </div>
                   </div>
                   <button type="submit" className="btn-primary w-full" disabled={saving}>
-                    {saving ? 'Creating...' : 'Create user'}
+                    {saving ? 'Creating…' : `Create ${form.role} account`}
                   </button>
                 </form>
               )}
 
+              {/* ── Edit ── */}
               {modal === 'edit' && target && (
                 <form onSubmit={handleEdit} className="space-y-4">
-                  <div><label className="label">Full name</label><input type="text" className="input" value={form.name} onChange={setF('name')} /></div>
-                  <div><label className="label">Email</label><input type="email" className="input" value={form.email} onChange={setF('email')} /></div>
+                  {target.role !== 'admin' && (
+                    <div>
+                      <label className="label">Full name</label>
+                      <input type="text" className="input" value={form.name} onChange={setF('name')} placeholder="Full name" />
+                    </div>
+                  )}
+                  <div>
+                    <label className="label">Email address</label>
+                    <input type="email" className="input" value={form.email} onChange={setF('email')} />
+                  </div>
                   <div>
                     <label className="label">Role</label>
                     <select className="input" value={form.role} onChange={setF('role')} disabled={target.id === me?.id}>
@@ -256,24 +307,71 @@ export default function UsersPage() {
                     {target.id === me?.id && <p className="text-xs text-slate-400 mt-1">You cannot change your own role.</p>}
                   </div>
                   <button type="submit" className="btn-primary w-full" disabled={saving}>
-                    {saving ? 'Saving...' : 'Save changes'}
+                    {saving ? 'Saving…' : 'Save changes'}
                   </button>
                 </form>
               )}
 
+              {/* ── Reset password ── */}
               {modal === 'reset' && target && (
                 <form onSubmit={handleReset} className="space-y-4">
-                  <p className="text-sm text-slate-600">Reset password for <strong>{target.patientProfile?.name || target.doctorProfile?.name || target.email}</strong>.</p>
+                  <p className="text-sm text-slate-600">
+                    Reset password for <strong>{displayName(target)}</strong>.
+                  </p>
                   <div>
                     <label className="label">New password</label>
                     <input type="password" className="input" required minLength={8} value={newPassword}
                       onChange={e => setNewPassword(e.target.value)} placeholder="Minimum 8 characters" />
                   </div>
                   <button type="submit" className="btn-primary w-full" disabled={saving}>
-                    {saving ? 'Resetting...' : 'Reset password'}
+                    {saving ? 'Resetting…' : 'Reset password'}
                   </button>
                 </form>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete confirmation modal ── */}
+      {modal === 'delete' && target && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white shadow-xl w-full max-w-sm">
+            <div className="px-6 pt-6 pb-2">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-10 w-10 bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <HiOutlineTrash className="text-red-600 text-xl" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-slate-900">Delete account</h2>
+                  <p className="text-xs text-slate-400">This action cannot be undone</p>
+                </div>
+              </div>
+
+              <p className="text-sm text-slate-600 mb-2">
+                You are about to permanently delete:
+              </p>
+              <div className="bg-slate-50 border border-slate-200 px-4 py-3 mb-4">
+                <p className="font-semibold text-slate-900 text-sm">{displayName(target)}</p>
+                <p className="text-xs text-slate-500">{target.email}</p>
+                <span className={`inline-flex items-center mt-1.5 px-2 py-0.5 text-xs font-semibold border capitalize ${roleStyle[target.role]}`}>
+                  {target.role}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mb-5">
+                All their appointments, consultation notes, symptom sessions, and data will be permanently removed.
+              </p>
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 mb-4">{error}</div>
+              )}
+            </div>
+
+            <div className="px-6 pb-6 flex gap-3">
+              <button onClick={close} className="btn-secondary flex-1">Cancel</button>
+              <button onClick={handleDelete} disabled={deleting} className="btn-danger flex-1">
+                {deleting ? 'Deleting…' : 'Yes, delete'}
+              </button>
             </div>
           </div>
         </div>

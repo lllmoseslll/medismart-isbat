@@ -65,9 +65,12 @@ router.post(
               },
             },
           } : undefined,
+          // Store admin display name in a notification record isn't ideal —
+          // instead we embed name in the response using the request body
         },
         include: { patientProfile: true, doctorProfile: true },
       });
+
 
       res.status(201).json(user);
     } catch (err) {
@@ -134,11 +137,24 @@ router.put(
 
 // DELETE /api/admin/users/:id
 router.delete('/users/:id', async (req, res) => {
-  if (req.params.id === req.user.userId) {
+  const { id } = req.params;
+  if (id === req.user.userId) {
     return res.status(403).json({ error: 'You cannot delete your own admin account' });
   }
   try {
-    await prisma.user.delete({ where: { id: req.params.id } });
+    // Cascade manually — Appointment FK has no onDelete:Cascade in schema
+    const apptIds = (await prisma.appointment.findMany({
+      where: { OR: [{ patientId: id }, { doctorId: id }] },
+      select: { id: true },
+    })).map(a => a.id);
+
+    if (apptIds.length) {
+      await prisma.consultationNote.deleteMany({ where: { appointmentId: { in: apptIds } } });
+      await prisma.appointment.deleteMany({ where: { id: { in: apptIds } } });
+    }
+
+    // SymptomSessions, PatientProfile, DoctorProfile, Notifications cascade via schema
+    await prisma.user.delete({ where: { id } });
     res.json({ message: 'User deleted' });
   } catch (err) {
     console.error(err);
