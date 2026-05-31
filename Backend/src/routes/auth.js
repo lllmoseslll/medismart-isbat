@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const prisma = require('../prisma');
+const { sendEmail, welcomeHtml } = require('../services/email');
 
 const router = express.Router();
 
@@ -47,6 +48,13 @@ router.post(
       });
 
       const { token, refreshToken } = signTokens(user.id, user.role);
+
+      // Send welcome email (non-blocking)
+      sendEmail({
+        to: email,
+        subject: 'Welcome to MediSmart!',
+        html: welcomeHtml(name, role),
+      }).catch(err => console.error('[WELCOME EMAIL]', err.message));
 
       res.status(201).json({
         token,

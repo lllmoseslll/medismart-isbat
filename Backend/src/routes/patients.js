@@ -31,7 +31,7 @@ router.put(
   requireAuth(['patient', 'admin']),
   [
     body('name').optional().notEmpty(),
-    body('phone').optional().isMobilePhone('any'),
+    body('phone').optional().isString().trim(),
     body('gender').optional().isIn(['male', 'female', 'other', 'prefer_not_to_say']),
     body('dob').optional().isISO8601(),
   ],

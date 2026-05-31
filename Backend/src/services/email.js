@@ -193,8 +193,40 @@ function newBookingDoctorHtml(doctorName, patientName, patientEmail, scheduledAt
   return wrap('#0284c7', '👨‍⚕️', 'New Appointment Request — MediSmart', body);
 }
 
+function welcomeHtml(name, role) {
+  const roleLabel = role === 'doctor' ? 'Doctor' : role === 'admin' ? 'Administrator' : 'Patient';
+  const tips = role === 'doctor'
+    ? ['Log in to your dashboard to see your appointment schedule', 'Review pending requests and confirm or decline appointments', 'Write consultation notes after each visit', 'Contribute to the AI knowledge base to improve symptom matching']
+    : role === 'admin'
+    ? ['Manage all user accounts from the Users page', 'Register new doctors and configure their availability', 'Monitor platform activity from the Reports page', 'Manage the AI knowledge base from AI Settings']
+    : ['Use Symptom Analysis to describe how you feel and get an AI assessment', 'Book an appointment with the recommended specialist in one step', 'Track all your upcoming and past appointments from the dashboard', 'Keep your medical history and allergies up to date in your profile'];
+
+  const tipItems = tips.map(t => `
+    <tr>
+      <td style="padding:6px 0 6px 0;">
+        <table cellpadding="0" cellspacing="0"><tr>
+          <td style="color:#0d9488;font-size:16px;padding-right:10px;vertical-align:top;">✓</td>
+          <td style="color:#334155;font-size:14px;">${t}</td>
+        </tr></table>
+      </td>
+    </tr>`).join('');
+
+  const body = `
+    <h2 style="margin:0 0 6px;font-size:24px;color:#0f172a;">Welcome to MediSmart, ${name}! 👋</h2>
+    <p style="margin:0 0 24px;color:#475569;font-size:15px;">Your <strong>${roleLabel}</strong> account has been created successfully. Here is what you can do:</p>
+    <table cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:1px solid #bbf7d0;width:100%;margin-bottom:24px;">
+      <tr><td style="padding:20px;">${tipItems}</td></tr>
+    </table>
+    <p style="margin:0 0 6px;font-size:14px;color:#64748b;">Log in at any time to get started:</p>
+    <p style="margin:0;font-size:14px;font-weight:700;color:#0d9488;">${process.env.FRONTEND_URL || 'http://localhost:3000'}/login</p>
+    <p style="margin:28px 0 0;font-size:13px;color:#94a3b8;">If you did not create this account, please ignore this email.</p>
+  `;
+  return wrap('#0d9488', '🏥', 'Welcome to MediSmart', body);
+}
+
 module.exports = {
   sendEmail,
+  welcomeHtml,
   appointmentConfirmationHtml,
   appointmentReminderHtml,
   appointmentStatusChangedHtml,
