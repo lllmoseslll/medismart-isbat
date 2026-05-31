@@ -7,8 +7,6 @@ const patientRoutes = require('./routes/patients');
 const appointmentRoutes = require('./routes/appointments');
 const doctorRoutes = require('./routes/doctors');
 const adminRoutes = require('./routes/admin');
-const { initQueue } = require('./services/queue');
-
 const app = express();
 
 app.use(cors({
@@ -29,8 +27,6 @@ app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
 });
-
-initQueue();
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {

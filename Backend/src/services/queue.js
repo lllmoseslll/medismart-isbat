@@ -1,53 +1,8 @@
-const { Queue, Worker } = require('bullmq');
 const prisma = require('../prisma');
 const { sendEmail, appointmentConfirmationHtml, appointmentReminderHtml } = require('./email');
 
-let notificationQueue = null;
-let worker = null;
-
-function getRedisConnection() {
+async function recordAndSend(data) {
   try {
-    const IORedis = require('ioredis');
-    return new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
-      maxRetriesPerRequest: null,
-      enableReadyCheck: false,
-    });
-  } catch {
-    return null;
-  }
-}
-
-function initQueue() {
-  const connection = getRedisConnection();
-  if (!connection) {
-    console.warn('[QUEUE] Redis not available — notifications will be logged only');
-    return;
-  }
-
-  notificationQueue = new Queue('notifications', { connection });
-
-  worker = new Worker('notifications', async (job) => {
-    const { userId, type, message, channel, emailPayload } = job.data;
-
-    await prisma.notification.create({
-      data: { userId, type, message, channel: channel || 'email', read: false },
-    });
-
-    if (channel === 'email' && emailPayload) {
-      await sendEmail(emailPayload);
-    }
-  }, { connection });
-
-  worker.on('failed', (job, err) => {
-    console.error(`[QUEUE] Job ${job?.id} failed:`, err.message);
-  });
-
-  console.log('[QUEUE] Notification worker started');
-}
-
-async function scheduleNotification(data, delayMs = 0) {
-  if (!notificationQueue) {
-    console.log(`[NOTIFICATION] ${data.type}: ${data.message}`);
     await prisma.notification.create({
       data: {
         userId: data.userId,
@@ -56,10 +11,26 @@ async function scheduleNotification(data, delayMs = 0) {
         channel: data.channel || 'push',
         read: false,
       },
-    }).catch(() => {});
-    return;
+    });
+  } catch (err) {
+    console.error('[NOTIFICATION] DB write failed:', err.message);
   }
-  await notificationQueue.add('send', data, { delay: delayMs });
+
+  if (data.channel === 'email' && data.emailPayload) {
+    try {
+      await sendEmail(data.emailPayload);
+    } catch (err) {
+      console.error('[NOTIFICATION] Email send failed:', err.message);
+    }
+  }
+}
+
+async function scheduleNotification(data, delayMs = 0) {
+  if (delayMs > 0) {
+    setTimeout(() => recordAndSend(data), delayMs);
+  } else {
+    await recordAndSend(data);
+  }
 }
 
 async function notifyAppointmentBooked(appointment, patientName, patientEmail, doctorName) {
@@ -77,7 +48,7 @@ async function notifyAppointmentBooked(appointment, patientName, patientEmail, d
 
   const msUntil24hBefore = new Date(appointment.scheduledAt) - Date.now() - 24 * 60 * 60 * 1000;
   if (msUntil24hBefore > 0) {
-    await scheduleNotification({
+    scheduleNotification({
       userId: appointment.patientId,
       type: 'appointment_reminder',
       message: `Reminder: appointment with ${doctorName} tomorrow at ${new Date(appointment.scheduledAt).toLocaleTimeString()}.`,
@@ -91,4 +62,4 @@ async function notifyAppointmentBooked(appointment, patientName, patientEmail, d
   }
 }
 
-module.exports = { initQueue, scheduleNotification, notifyAppointmentBooked };
+module.exports = { scheduleNotification, notifyAppointmentBooked };

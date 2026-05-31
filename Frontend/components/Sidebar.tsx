@@ -16,9 +16,23 @@ interface SidebarProps {
   userRole: string;
 }
 
+const roleMeta: Record<string, { label: string; pill: string }> = {
+  patient: { label: 'Patient',      pill: 'bg-teal-500/20 text-teal-200 border border-teal-500/30' },
+  doctor:  { label: 'Doctor',       pill: 'bg-sky-500/20 text-sky-200 border border-sky-500/30' },
+  admin:   { label: 'Administrator', pill: 'bg-violet-500/20 text-violet-200 border border-violet-500/30' },
+};
+
 export default function Sidebar({ items, userName, userRole }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
+  const router   = useRouter();
+  const meta     = roleMeta[userRole] ?? roleMeta.patient;
+
+  const initials = userName
+    .split(' ')
+    .slice(0, 2)
+    .map(w => w[0] ?? '')
+    .join('')
+    .toUpperCase();
 
   function logout() {
     clearAuth();
@@ -27,55 +41,82 @@ export default function Sidebar({ items, userName, userRole }: SidebarProps) {
   }
 
   return (
-    <aside className="fixed inset-y-0 left-0 w-64 bg-brand-900 flex flex-col">
-      <div className="p-6 border-b border-brand-800">
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 bg-brand-500/30 rounded-xl flex items-center justify-center">
-            <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+    <aside
+      className="fixed inset-y-0 left-0 w-64 flex flex-col z-40"
+      style={{ backgroundColor: '#0c4a6e' }}
+    >
+      {/* Logo */}
+      <div className="px-5 pt-6 pb-5 border-b border-white/10">
+        <div className="flex items-center gap-2.5">
+          <div className="h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: 'linear-gradient(135deg,#0d9488,#0284c7)' }}>
+            <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
                 d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
           </div>
-          <span className="text-white font-bold text-lg">MediSmart</span>
+          <span className="text-white font-bold text-lg tracking-tight" style={{ fontFamily: 'Outfit,sans-serif' }}>
+            MediSmart
+          </span>
         </div>
       </div>
 
-      <div className="px-4 py-4 border-b border-brand-800">
+      {/* User card */}
+      <div className="px-4 py-4 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 bg-brand-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-            {userName.charAt(0).toUpperCase()}
+          <div
+            className="h-10 w-10 rounded-xl flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+            style={{ background: 'linear-gradient(135deg,#0d9488,#0369a1)' }}
+          >
+            {initials}
           </div>
-          <div className="min-w-0">
-            <p className="text-white text-sm font-medium truncate">{userName}</p>
-            <p className="text-brand-300 text-xs capitalize">{userRole}</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-white text-sm font-semibold truncate leading-tight">{userName}</p>
+            <span className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${meta.pill}`}>
+              {meta.label}
+            </span>
           </div>
         </div>
       </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {items.map(item => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={clsx(
-              'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-              pathname === item.href || pathname.startsWith(item.href + '/')
-                ? 'bg-brand-700 text-white'
-                : 'text-brand-200 hover:bg-brand-800 hover:text-white'
-            )}
-          >
-            {item.icon}
-            {item.label}
-          </Link>
-        ))}
+      {/* Navigation */}
+      <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
+        {items.map(item => {
+          const active = pathname === item.href || pathname.startsWith(item.href + '/');
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={clsx(
+                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group',
+                active
+                  ? 'bg-teal-600 text-white shadow-sm'
+                  : 'text-blue-100/60 hover:bg-white/8 hover:text-white'
+              )}
+              style={active ? {} : { '--tw-bg-opacity': '0.08' } as React.CSSProperties}
+            >
+              <span className={clsx(
+                'flex-shrink-0 transition-colors',
+                active ? 'text-teal-100' : 'text-blue-200/50 group-hover:text-blue-100'
+              )}>
+                {item.icon}
+              </span>
+              {item.label}
+              {active && (
+                <span className="ml-auto h-1.5 w-1.5 rounded-full bg-teal-200" />
+              )}
+            </Link>
+          );
+        })}
       </nav>
 
-      <div className="p-4 border-t border-brand-800">
+      {/* Logout */}
+      <div className="px-3 pb-5 pt-3 border-t border-white/10">
         <button
           onClick={logout}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-brand-200 hover:bg-brand-800 hover:text-white transition-colors"
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-blue-100/50 hover:bg-white/10 hover:text-white transition-all duration-150"
         >
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
               d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
